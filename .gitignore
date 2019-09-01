@@ -2,6 +2,9 @@
 bin/
 pyvenv.cfg
 pip-selfcheck.json
+rent.py
+.DS_Store
+*.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
