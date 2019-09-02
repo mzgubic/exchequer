@@ -24,6 +24,14 @@ def main():
                               'description VARCHAR(255) NOT NULL,'
                               'PRIMARY KEY (id) )')
 
+    table_defs['fx'] = ('CREATE TABLE fx ( '
+                        'id INT NOT NULL AUTO_INCREMENT,'
+                        'date DATE,'
+                        'from_cur VARCHAR(3) NOT NULL,'
+                        'to_cur VARCHAR(3) NOT NULL,'
+                        'value DECIMAL(10, 5) NOT NULL,'
+                        'PRIMARY KEY (id) )')
+
     for table_name in table_defs:
         if table_name not in utils.tables(cursor):
             cursor.execute(table_defs[table_name])

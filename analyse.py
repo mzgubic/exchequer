@@ -11,11 +11,13 @@ import utils
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
+
 def insert_missing_values(df):
     """
     Fills zeros where no entries are found
     """
 
+    # fill in all the categories
     categories = np.unique(df.category.values)
 
     for i in range(len(df)):
@@ -27,6 +29,7 @@ def insert_missing_values(df):
             
             if df[mask].empty:
                 df = df.append({'year':year, 'month':month, 'category':c, 'sum':0}, ignore_index=True)
+
     df.sort_values(by=['year', 'month'], inplace=True)
 
     return df
@@ -40,14 +43,16 @@ def main():
 
     # total expenses
     query = ('SELECT YEAR(date), MONTH(date), SUM(amount) FROM expenses '
-             'GROUP BY YEAR(date), MONTH(date)')
+             'GROUP BY YEAR(date), MONTH(date) '
+             'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
     df = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'sum'])
     print(df)
 
     # expenses by category
     query = ('SELECT YEAR(date), MONTH(date), category, SUM(amount) FROM expenses '
-             'GROUP BY YEAR(date), MONTH(date), category')
+             'GROUP BY YEAR(date), MONTH(date), category '
+             'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
     df_cat = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'category', 'sum'])
     df_cat = insert_missing_values(df_cat)

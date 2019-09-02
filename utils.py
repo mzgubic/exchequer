@@ -24,9 +24,9 @@ def connect():
 def use_db(cursor):
     # use the existing database or create a new one
     try:
-        cursor.execute('USE {}'.format(utils.db_name))
+        cursor.execute('USE {}'.format(db_name))
     except mysql.connector.Error as err:
-        cursor.execute('CREATE DATABASE {}'.format(utils.db_name))
+        cursor.execute('CREATE DATABASE {}'.format(db_name))
 
 def tables(cursor):
     cursor.execute('SHOW TABLES')
@@ -38,3 +38,60 @@ def print_table(cursor, table):
     for row in cursor.fetchall():
         print(row)
 
+
+def in_table(row, cursor, table):
+
+    # add conditions
+    conditions = []
+    for key in row.index:
+        value = row.loc[key]
+        if type(value) == str:
+            conditions.append("{}='{}'".format(key, value.strip()))
+        else:
+            conditions.append("{}={}".format(key, value))
+            
+    # execute SQL query and record the results
+    condition = '({})'.format(' AND '.join(conditions))
+    query = 'SELECT EXISTS(SELECT * FROM {} WHERE {})'.format(table, condition)
+    cursor.execute(query)
+    return bool(cursor.fetchall()[0][0])
+
+def add_to_table(row, cursor, table):
+
+    # build the query
+    keys = list(row.index)
+    values = list(row.values)
+    values = ['\''+val.strip()+'\'' if type(val) == str else str(val) for val in values]
+    query = 'INSERT INTO {} ({}) VALUES ({})'.format(table, ', '.join(keys), ', '.join(values))
+    #print_table(cursor, table)
+
+    # and execute it
+    cursor.execute(query)
+
+def check_df(df):
+
+    columns = [c.strip() for c in df.columns]
+
+    for key in expenses_keys:
+        if not key in columns:
+            print('missing {} key'.format(key))
+            exit(1)
+
+def add_csv(csv_path, cursor, table):
+
+    # extract the dataframe
+    df = pd.read_csv(csv_path)
+    check_df(df)
+    add_df(df, cursor, table)
+
+def add_df(df, cursor, table):
+
+    # loop over the rows in the dataframe
+    for i in df.index:
+
+        # get row
+        row = df.loc[i]
+
+        # check if the item is not already in the database
+        if not in_table(row, cursor, table):
+            add_to_table(row, cursor, table)
