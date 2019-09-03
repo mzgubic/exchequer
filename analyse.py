@@ -41,8 +41,27 @@ def main():
     cnx, cursor = utils.connect()
     cursor.execute('USE {}'.format(utils.db_name))
 
+    # compute the average exchange rates
+    cursor.execute('select AVG(value) from fx where from_cur=\'GBP\' and to_cur=\'EUR\'')
+    avg_rate_GBP_to_EUR = cursor.fetchall()[0][0]
+    print(avg_rate_GBP_to_EUR)
+
+    # compute the converted spending amount
+    try:
+        cursor.execute('drop view converted')
+    except mysql.connector.errors.ProgrammingError:
+        print('cant delete converted')
+    query = ('CREATE VIEW converted AS '
+             'SELECT expenses.id, '
+                    '(CASE WHEN currency=\'EUR\' THEN amount ELSE amount*IFNULL(value, {}) END) as converted_amount '
+             'FROM expenses LEFT JOIN fx ON '
+             'expenses.date=fx.date AND fx.from_cur=\'GBP\''.format(avg_rate_GBP_to_EUR))
+    cursor.execute(query)
+
+
     # total expenses
-    query = ('SELECT YEAR(date), MONTH(date), SUM(amount) FROM expenses '
+    query = ('SELECT YEAR(date), MONTH(date), SUM(converted_amount) FROM expenses '
+             'LEFT JOIN converted ON converted.id = expenses.id '
              'GROUP BY YEAR(date), MONTH(date) '
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
@@ -50,7 +69,8 @@ def main():
     print(df)
 
     # expenses by category
-    query = ('SELECT YEAR(date), MONTH(date), category, SUM(amount) FROM expenses '
+    query = ('SELECT YEAR(date), MONTH(date), category, SUM(converted_amount) FROM expenses '
+             'LEFT JOIN converted ON converted.id = expenses.id '
              'GROUP BY YEAR(date), MONTH(date), category '
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
@@ -76,7 +96,7 @@ def main():
 
 
     # cosmetics
-    ax.set_title('Monthly spending')
+    ax.set_title('Monthly spending (EUR/month)')
     ax.set_ylim(0, ax.get_ylim()[1])
     ax.set_xticks(range(len(df)))
     ax.set_xticklabels(['{}-{}'.format(df.loc[i].year, df.loc[i].month) if df.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df))])
