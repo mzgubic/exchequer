@@ -24,7 +24,7 @@ def main():
     df = pd.read_csv(args.csv)
     df['from_cur'] = getattr(args, 'from')
     df['to_cur'] = args.to
-    df['date'] = pd.to_datetime(df.date).astype(str) # format correctly
+    df['date'] = pd.to_datetime(df.date, dayfirst=True).astype(str) # format correctly
 
     # add entries via a csv file
     utils.add_df(df, cursor, 'fx')
