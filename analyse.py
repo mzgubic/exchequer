@@ -58,17 +58,15 @@ def main():
              'expenses.date=fx.date AND fx.from_cur=\'GBP\''.format(avg_rate_GBP_to_EUR))
     cursor.execute(query)
 
-
-    # total expenses
+    # total expenses per month/year
     query = ('SELECT YEAR(date), MONTH(date), SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted ON converted.id = expenses.id '
              'GROUP BY YEAR(date), MONTH(date) '
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
     df = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'sum'])
-    print(df)
 
-    # expenses by category
+    # expenses per month/year/category
     query = ('SELECT YEAR(date), MONTH(date), category, SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted ON converted.id = expenses.id '
              'GROUP BY YEAR(date), MONTH(date), category '
@@ -76,16 +74,24 @@ def main():
     cursor.execute(query)
     df_cat = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'category', 'sum'])
     df_cat = insert_missing_values(df_cat)
-    print(df_cat)
 
+    # expenses per category
+    query = ('SELECT category, sum(converted_amount) FROM expenses '
+             'LEFT JOIN converted ON expenses.id = converted.id '
+             'GROUP BY category '
+             'ORDER BY SUM(converted_amount) DESC')
+    cursor.execute(query)
+    df_total_category_spending = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
+    print(df_total_category_spending)
+    
     # do stuff
-    categories = np.unique(df_cat.category.values)
+    categories = [c for c in df_total_category_spending.category]
     values = {}
     for c in categories:
         this_df = df_cat[df_cat.category==c]
         values[c] = this_df['sum'].values.astype(float)
 
-    y = np.row_stack([values[c] for c in sorted(values)])
+    y = np.row_stack([values[c] for c in categories])
     y_stack = np.cumsum(y, axis=0)
 
     # plot

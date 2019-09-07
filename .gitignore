@@ -5,6 +5,7 @@ pip-selfcheck.json
 rent.py
 .DS_Store
 *.pdf
+private_expenses.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
