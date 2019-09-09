@@ -37,7 +37,7 @@ def insert_missing_values(df):
 
 def get_avg_fx(from_cur, to_cur, cursor):
 
-    cursor.execute('select AVG(value) from fx where from_cur=\'{}\' and to_cur=\'{}\''.format(from_cur, to_cur))
+    cursor.execute('SELECT AVG(value) FROM fx WHERE from_cur=\'{}\' AND to_cur=\'{}\''.format(from_cur, to_cur))
     avg = cursor.fetchall()[0][0]
     
     return avg
