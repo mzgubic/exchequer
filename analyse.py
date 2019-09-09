@@ -35,18 +35,19 @@ def insert_missing_values(df):
     return df
 
 
-def main():
+def get_avg_fx(from_cur, to_cur, cursor):
 
-    # connect
-    cnx, cursor = utils.connect()
-    cursor.execute('USE {}'.format(utils.db_name))
+    cursor.execute('select AVG(value) from fx where from_cur=\'{}\' and to_cur=\'{}\''.format(from_cur, to_cur))
+    avg = cursor.fetchall()[0][0]
+    
+    return avg
+
+
+def compute_converted(cursor):
 
     # compute the average exchange rates
-    cursor.execute('select AVG(value) from fx where from_cur=\'GBP\' and to_cur=\'EUR\'')
-    avg_rate_GBP_to_EUR = cursor.fetchall()[0][0]
-    print(avg_rate_GBP_to_EUR)
+    avg_rate = get_avg_fx('GBP', 'EUR', cursor)
 
-    # compute the converted spending amount
     try:
         cursor.execute('drop view converted')
     except mysql.connector.errors.ProgrammingError:
@@ -55,8 +56,14 @@ def main():
              'SELECT expenses.id, '
                     '(CASE WHEN currency=\'EUR\' THEN amount ELSE amount*IFNULL(value, {}) END) as converted_amount '
              'FROM expenses LEFT JOIN fx ON '
-             'expenses.date=fx.date AND fx.from_cur=\'GBP\''.format(avg_rate_GBP_to_EUR))
+             'expenses.date=fx.date AND fx.from_cur=\'GBP\''.format(avg_rate))
     cursor.execute(query)
+
+
+def per_month_plots(cursor):
+
+    # compute the converted spending amount
+    compute_converted(cursor)
 
     # total expenses per month/year
     query = ('SELECT YEAR(date), MONTH(date), SUM(converted_amount) FROM expenses '
@@ -75,22 +82,17 @@ def main():
     df_cat = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'category', 'sum'])
     df_cat = insert_missing_values(df_cat)
 
-    # expenses per category
+    # expenses per category (descending order)
     query = ('SELECT category, sum(converted_amount) FROM expenses '
              'LEFT JOIN converted ON expenses.id = converted.id '
              'GROUP BY category '
              'ORDER BY SUM(converted_amount) DESC')
     cursor.execute(query)
     df_total_category_spending = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
-    print(df_total_category_spending)
     
-    # do stuff
+    # stack them
     categories = [c for c in df_total_category_spending.category]
-    values = {}
-    for c in categories:
-        this_df = df_cat[df_cat.category==c]
-        values[c] = this_df['sum'].values.astype(float)
-
+    values = {c:df_cat.query('category == "{}"'.format(c))['sum'].values.astype(float) for c in categories}
     y = np.row_stack([values[c] for c in categories])
     y_stack = np.cumsum(y, axis=0)
 
@@ -99,7 +101,6 @@ def main():
     for i, c in enumerate(categories):
         ax.fill_between(range(len(df)), 0 if i==0 else y_stack[i-1, :], y_stack[i, :], label=c, alpha=0.7)
     ax.plot(range(len(df)), df['sum'], c='k', label='total')
-
 
     # cosmetics
     ax.set_title('Monthly spending (EUR/month)')
@@ -110,6 +111,22 @@ def main():
 
     plt.savefig('spending.pdf')
 
+
+def per_weekday_plots(cursor):
+    pass
+
+
+def main():
+
+    # connect
+    cnx, cursor = utils.connect()
+    cursor.execute('USE {}'.format(utils.db_name))
+
+    # per month plot
+    per_month_plots(cursor)
+
+    # per weekday plot
+    per_weekday_plots(cursor)
 
     
 
