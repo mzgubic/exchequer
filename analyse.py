@@ -51,32 +51,34 @@ def get_currencies(cursor):
     return currencies
 
 
-def compute_converted(cursor):
+def compute_converted(cursor, currency):
 
     # get a list of all currencies
     currencies = get_currencies(cursor)
+    foreign_cs = [c for c in currencies if not c==currency]
 
     # compute the average exchange rates
-    avg_rate = get_avg_fx(from_cur='GBP', to_cur='EUR', cursor=cursor)
+    avg_rates = {c:get_avg_fx(from_cur=c, to_cur=currency, cursor=cursor) for c in foreign_cs}
 
     try:
         cursor.execute('drop view converted')
     except mysql.connector.errors.ProgrammingError:
         print('cant delete converted')
 
-    query = ('CREATE VIEW converted AS '
-             'SELECT expenses.id, '
-                    '(CASE WHEN currency=\'EUR\' THEN amount ELSE amount*IFNULL(value, {}) END) as converted_amount '
-             'FROM expenses LEFT JOIN fx ON '
-             'expenses.date=fx.date AND fx.from_cur=\'GBP\''.format(avg_rate))
-
+    # build the query
+    whens = ['WHEN currency=\'{}\' THEN amount*IFNULL(value, {})'.format(c, avg_rates[c]) for c in foreign_cs]
+    query = 'CREATE VIEW converted AS ' + \
+            'SELECT expenses.id, ' + \
+                   '(CASE WHEN currency=\'{}\' THEN amount {} ELSE amount END) AS converted_amount '.format(currency, ' '.join(whens)) + \
+            'FROM expenses LEFT JOIN fx ON ' + \
+            'expenses.date=fx.date AND expenses.currency=fx.from_cur AND fx.to_cur=\'{}\''.format(currency)
     cursor.execute(query)
 
 
 def per_month_plots(cursor, currency):
 
     # compute the converted spending amount
-    compute_converted(cursor)
+    compute_converted(cursor, currency)
 
     # total expenses per month/year
     query = ('SELECT YEAR(date), MONTH(date), SUM(converted_amount) FROM expenses '
