@@ -71,7 +71,7 @@ def per_month_plots(cursor):
              'GROUP BY YEAR(date), MONTH(date) '
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
-    df = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'sum'])
+    df_my = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'sum'])
 
     # expenses per month/year/category
     query = ('SELECT YEAR(date), MONTH(date), category, SUM(converted_amount) FROM expenses '
@@ -79,8 +79,8 @@ def per_month_plots(cursor):
              'GROUP BY YEAR(date), MONTH(date), category '
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
-    df_cat = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'category', 'sum'])
-    df_cat = insert_missing_values(df_cat)
+    df_myc = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'category', 'sum'])
+    df_myc = insert_missing_values(df_myc)
 
     # expenses per category (descending order)
     query = ('SELECT category, sum(converted_amount) FROM expenses '
@@ -88,28 +88,40 @@ def per_month_plots(cursor):
              'GROUP BY category '
              'ORDER BY SUM(converted_amount) DESC')
     cursor.execute(query)
-    df_total_category_spending = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
+    df_cat = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
     
     # stack them
-    categories = [c for c in df_total_category_spending.category]
-    values = {c:df_cat.query('category == "{}"'.format(c))['sum'].values.astype(float) for c in categories}
+    categories = [c for c in df_cat.category]
+    values = {c:df_myc.query('category == "{}"'.format(c))['sum'].values.astype(float) for c in categories}
     y = np.row_stack([values[c] for c in categories])
     y_stack = np.cumsum(y, axis=0)
 
-    # plot
+    # stacked plot
     fig, ax = plt.subplots()
     for i, c in enumerate(categories):
-        ax.fill_between(range(len(df)), 0 if i==0 else y_stack[i-1, :], y_stack[i, :], label=c, alpha=0.7)
-    ax.plot(range(len(df)), df['sum'], c='k', label='total')
+        ax.fill_between(range(len(df_my)), 0 if i==0 else y_stack[i-1, :], y_stack[i, :], label=c, alpha=0.7)
+    ax.plot(range(len(df_my)), df_my['sum'], c='k', label='total')
 
-    # cosmetics
     ax.set_title('Monthly spending (EUR/month)')
     ax.set_ylim(0, ax.get_ylim()[1])
-    ax.set_xticks(range(len(df)))
-    ax.set_xticklabels(['{}-{}'.format(df.loc[i].year, df.loc[i].month) if df.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df))])
+    ax.set_xticks(range(len(df_my)))
+    ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
+    ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
+    plt.savefig('spending_stacked.pdf')
 
-    plt.savefig('spending.pdf')
+    # unstacked plot
+    fig, ax = plt.subplots()
+    for i, c in enumerate(categories):
+        #ax.fill_between(range(len(df_my)), 0, values[c], label=c, alpha=0.8)
+        ax.plot(range(len(df_my)), values[c], label=c, alpha=0.9)
+    ax.set_title('Monthly spending (EUR/month)')
+    ax.set_ylim(0, ax.get_ylim()[1])
+    ax.set_xticks(range(len(df_my)))
+    ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
+    ax.grid(linestyle=':', color='k', alpha=0.2)
+    ax.legend(loc='upper left')
+    plt.savefig('spending_unstacked.pdf')
 
 
 def per_weekday_plots(cursor):
