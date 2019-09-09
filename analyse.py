@@ -43,24 +43,37 @@ def get_avg_fx(from_cur, to_cur, cursor):
     return avg
 
 
+def get_currencies(cursor):
+
+    query = 'SELECT DISTINCT currency FROM expenses'
+    cursor.execute(query)
+    currencies = [c[0] for c in cursor.fetchall()]
+    return currencies
+
+
 def compute_converted(cursor):
 
+    # get a list of all currencies
+    currencies = get_currencies(cursor)
+
     # compute the average exchange rates
-    avg_rate = get_avg_fx('GBP', 'EUR', cursor)
+    avg_rate = get_avg_fx(from_cur='GBP', to_cur='EUR', cursor=cursor)
 
     try:
         cursor.execute('drop view converted')
     except mysql.connector.errors.ProgrammingError:
         print('cant delete converted')
+
     query = ('CREATE VIEW converted AS '
              'SELECT expenses.id, '
                     '(CASE WHEN currency=\'EUR\' THEN amount ELSE amount*IFNULL(value, {}) END) as converted_amount '
              'FROM expenses LEFT JOIN fx ON '
              'expenses.date=fx.date AND fx.from_cur=\'GBP\''.format(avg_rate))
+
     cursor.execute(query)
 
 
-def per_month_plots(cursor):
+def per_month_plots(cursor, currency):
 
     # compute the converted spending amount
     compute_converted(cursor)
@@ -102,43 +115,48 @@ def per_month_plots(cursor):
         ax.fill_between(range(len(df_my)), 0 if i==0 else y_stack[i-1, :], y_stack[i, :], label=c, alpha=0.7)
     ax.plot(range(len(df_my)), df_my['sum'], c='k', label='total')
 
-    ax.set_title('Monthly spending (EUR/month)')
+    ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
     ax.set_xticks(range(len(df_my)))
     ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
-    plt.savefig('spending_stacked.pdf')
+    plt.savefig('spending_stacked_{}.pdf'.format(currency))
 
     # unstacked plot
     fig, ax = plt.subplots()
     for i, c in enumerate(categories):
-        #ax.fill_between(range(len(df_my)), 0, values[c], label=c, alpha=0.8)
         ax.plot(range(len(df_my)), values[c], label=c, alpha=0.9)
-    ax.set_title('Monthly spending (EUR/month)')
+    ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
     ax.set_xticks(range(len(df_my)))
     ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
-    plt.savefig('spending_unstacked.pdf')
+    plt.savefig('spending_unstacked_{}.pdf'.format(currency))
 
 
-def per_weekday_plots(cursor):
+def per_weekday_plots(cursor, currency):
     pass
 
 
 def main():
+
+    # parse arguments
+    parser = argparse.ArgumentParser(description='analyse the database')
+    parser.add_argument('--currency', type=str, default='EUR',
+                        help='currency in which to display the results')
+    args = parser.parse_args()
 
     # connect
     cnx, cursor = utils.connect()
     cursor.execute('USE {}'.format(utils.db_name))
 
     # per month plot
-    per_month_plots(cursor)
+    per_month_plots(cursor, args.currency)
 
     # per weekday plot
-    per_weekday_plots(cursor)
+    per_weekday_plots(cursor, args.currency)
 
     
 
