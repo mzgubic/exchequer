@@ -39,8 +39,12 @@ def get_avg_fx(from_cur, to_cur, cursor):
 
     cursor.execute('SELECT AVG(value) FROM fx WHERE from_cur=\'{}\' AND to_cur=\'{}\''.format(from_cur, to_cur))
     avg = cursor.fetchall()[0][0]
-    
-    return avg
+
+    if avg == None:
+        print('WARNING: No conversion rate data from {f} to {t}. Using 1{f}=1{t}'.format(f=from_cur, t=to_cur))
+        return 1.0
+    else:
+        return avg
 
 
 def get_currencies(cursor):
@@ -61,7 +65,7 @@ def compute_converted(cursor, currency):
     avg_rates = {c:get_avg_fx(from_cur=c, to_cur=currency, cursor=cursor) for c in foreign_cs}
 
     try:
-        cursor.execute('drop view converted')
+        cursor.execute('DROP VIEW converted')
     except mysql.connector.errors.ProgrammingError:
         print('cant delete converted')
 
@@ -149,6 +153,9 @@ def main():
     parser.add_argument('--currency', type=str, default='EUR',
                         help='currency in which to display the results')
     args = parser.parse_args()
+
+    # delete all old pdfs
+    os.system('rm *.pdf')
 
     # connect
     cnx, cursor = utils.connect()
