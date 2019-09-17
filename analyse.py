@@ -115,6 +115,11 @@ def per_month_plots(cursor, currency):
     cursor.execute(query)
     df_cat = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
     df_cat = insert_missing_values(df_cat)
+
+    # the earliest and latest dates: get the indices (to limit the plot range only)
+    spends = df_my['sum'] != 0
+    earliest = min(spends[spends].index)
+    latest = max(spends[spends].index)
     
     # stack them
     categories = [c for c in df_cat.category]
@@ -131,7 +136,8 @@ def per_month_plots(cursor, currency):
     ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
     ax.set_xticks(range(len(df_my)))
-    ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 7] else '' for i in range(len(df_my))])
+    ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
+    ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
     plt.savefig('spending_stacked_{}.pdf'.format(currency))
@@ -144,6 +150,7 @@ def per_month_plots(cursor, currency):
     ax.set_ylim(0, ax.get_ylim()[1])
     ax.set_xticks(range(len(df_my)))
     ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
+    ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
     plt.savefig('spending_unstacked_{}.pdf'.format(currency))
