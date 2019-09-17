@@ -81,9 +81,6 @@ def compute_converted(cursor, currency):
 
 def per_month_plots(cursor, currency):
 
-    # compute the converted spending amount
-    compute_converted(cursor, currency)
-
     # total expenses per month/year
     query = ('SELECT YEAR(date), MONTH(date), SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted ON converted.id = expenses.id '
@@ -143,7 +140,16 @@ def per_month_plots(cursor, currency):
 
 
 def per_weekday_plots(cursor, currency):
-    pass
+ 
+    # total expenses per month/year
+    query = ('SELECT category, DAYOFWEEK(date) as dow, SUM(converted_amount) FROM expenses '
+             'LEFT JOIN converted ON converted.id = expenses.id '
+             'GROUP BY category, dow '
+             'ORDER BY category ')
+    cursor.execute(query)
+    df = pd.DataFrame(cursor.fetchall(), columns=['category', 'day', 'amount'])
+    print(df)
+
 
 
 def main():
@@ -160,6 +166,9 @@ def main():
     # connect
     cnx, cursor = utils.connect()
     cursor.execute('USE {}'.format(utils.db_name))
+
+    # compute the converted spending amount
+    compute_converted(cursor, args.currency)
 
     # per month plot
     per_month_plots(cursor, args.currency)

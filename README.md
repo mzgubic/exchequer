@@ -3,8 +3,7 @@ keep track of and analyse expenses
 
 # TODO:
 - spending per day of the week
-- total spending
-- list most popular items in each category
+- total spending per category (columns), break down in descriptions, spell out popular items
 - document how to add exchange rate data
 - add income table
 - add income to the expenses plot
