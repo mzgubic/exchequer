@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import argparse
+import itertools
 import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,20 +18,23 @@ def insert_missing_values(df):
     Fills zeros where no entries are found
     """
 
-    # fill in all the categories
-    categories = np.unique(df.category.values)
+    columns = df.columns.values
+    groups = {c:np.unique(df[c]) for c in columns if c != 'sum'}
 
-    for i in range(len(df)):
-        year, month = df.loc[i].year, df.loc[i].month
+    # loop over all combinations of all groups other than 'sum'
+    for tup in itertools.product(*groups.values()):
 
-        for c in categories:
-            mask = np.logical_and(df.year == year, df.month == month)
-            mask = np.logical_and(mask, df.category == c)
-            
-            if df[mask].empty:
-                df = df.append({'year':year, 'month':month, 'category':c, 'sum':0}, ignore_index=True)
+        # check if the combination of values has a non zero sum
+        group = {g:tup[i] for i, g in enumerate(groups.keys())}
+        masks = {g:(df[g]==group[g]).values for g in group}
+        mask = np.all([*masks.values()], axis=0)
+        exists = np.any(mask)
 
-    df.sort_values(by=['year', 'month'], inplace=True)
+        # and add a zero value if it doesnt
+        if not exists:
+            row = {g:group[g] for g in group}
+            row['sum'] = 0
+            df = df.append(row, ignore_index=True)
 
     return df
 
@@ -88,6 +92,9 @@ def per_month_plots(cursor, currency):
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
     df_my = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'sum'])
+    df_my = insert_missing_values(df_my)
+    df_my.sort_values(by=['year', 'month'], inplace=True)
+    df_my.reset_index(drop=True, inplace=True)
 
     # expenses per month/year/category
     query = ('SELECT YEAR(date), MONTH(date), category, SUM(converted_amount) FROM expenses '
@@ -97,6 +104,8 @@ def per_month_plots(cursor, currency):
     cursor.execute(query)
     df_myc = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'category', 'sum'])
     df_myc = insert_missing_values(df_myc)
+    df_myc.sort_values(by=['year', 'month', 'category'], inplace=True)
+    df_myc.reset_index(drop=True, inplace=True)
 
     # expenses per category (descending order)
     query = ('SELECT category, sum(converted_amount) FROM expenses '
@@ -105,6 +114,7 @@ def per_month_plots(cursor, currency):
              'ORDER BY SUM(converted_amount) DESC')
     cursor.execute(query)
     df_cat = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
+    df_cat = insert_missing_values(df_cat)
     
     # stack them
     categories = [c for c in df_cat.category]
@@ -121,7 +131,7 @@ def per_month_plots(cursor, currency):
     ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
     ax.set_xticks(range(len(df_my)))
-    ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
+    ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 7] else '' for i in range(len(df_my))])
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
     plt.savefig('spending_stacked_{}.pdf'.format(currency))
@@ -148,7 +158,7 @@ def per_weekday_plots(cursor, currency):
              'ORDER BY category ')
     cursor.execute(query)
     df = pd.DataFrame(cursor.fetchall(), columns=['category', 'day', 'amount'])
-    print(df)
+    #print(df)
 
 
 
