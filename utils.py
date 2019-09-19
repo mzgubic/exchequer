@@ -64,7 +64,6 @@ def add_to_table(row, cursor, table):
     values = list(row.values)
     values = ['\''+val.strip()+'\'' if type(val) == str else str(val) for val in values]
     query = 'INSERT INTO {} ({}) VALUES ({})'.format(table, ', '.join(keys), ', '.join(values))
-    #print_table(cursor, table)
 
     # and execute it
     cursor.execute(query)
@@ -95,4 +94,5 @@ def add_df(df, cursor, table):
 
         # check if the item is not already in the database
         if not in_table(row, cursor, table):
+            print('Adding {}'.format(row))
             add_to_table(row, cursor, table)

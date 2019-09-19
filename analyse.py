@@ -113,8 +113,8 @@ def per_month_plots(cursor, currency):
              'GROUP BY category '
              'ORDER BY SUM(converted_amount) DESC')
     cursor.execute(query)
-    df_cat = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
-    df_cat = insert_missing_values(df_cat)
+    df_c = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
+    df_c = insert_missing_values(df_c)
 
     # the earliest and latest dates: get the indices (to limit the plot range only)
     spends = df_my['sum'] != 0
@@ -122,7 +122,7 @@ def per_month_plots(cursor, currency):
     latest = max(spends[spends].index)
     
     # stack them
-    categories = [c for c in df_cat.category]
+    categories = [c for c in df_c.category]
     values = {c:df_myc.query('category == "{}"'.format(c))['sum'].values.astype(float) for c in categories}
     y = np.row_stack([values[c] for c in categories])
     y_stack = np.cumsum(y, axis=0)
@@ -140,7 +140,7 @@ def per_month_plots(cursor, currency):
     ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
-    plt.savefig('spending_stacked_{}.pdf'.format(currency))
+    plt.savefig('monthly_stacked_{}.pdf'.format(currency))
 
     # unstacked plot
     fig, ax = plt.subplots()
@@ -153,20 +153,67 @@ def per_month_plots(cursor, currency):
     ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
-    plt.savefig('spending_unstacked_{}.pdf'.format(currency))
+    plt.savefig('monthly_unstacked_{}.pdf'.format(currency))
 
 
 def per_weekday_plots(cursor, currency):
  
-    # total expenses per month/year
+    # total expenses per category and day of the week
     query = ('SELECT category, DAYOFWEEK(date) as dow, SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted ON converted.id = expenses.id '
              'GROUP BY category, dow '
-             'ORDER BY category ')
+             'ORDER BY dow ')
     cursor.execute(query)
-    df = pd.DataFrame(cursor.fetchall(), columns=['category', 'day', 'amount'])
-    #print(df)
+    df_cd = pd.DataFrame(cursor.fetchall(), columns=['category', 'day', 'sum'])
+    df_cd = insert_missing_values(df_cd)
+    df_cd.sort_values(by=['day', 'category'], inplace=True)
+    df_cd.reset_index(drop=True, inplace=True)
 
+    # total expenses per day of the week 
+    query = ('SELECT DAYOFWEEK(date) as dow, SUM(converted_amount) AS sum FROM expenses '
+             'LEFT JOIN converted ON expenses.id = converted.id '
+             'GROUP BY dow '
+             'ORDER BY dow ')
+    cursor.execute(query)
+    df_d = pd.DataFrame(cursor.fetchall(), columns=['day', 'sum'])
+
+    # expenses per category (descending order)
+    query = ('SELECT category, sum(converted_amount) FROM expenses '
+             'LEFT JOIN converted ON expenses.id = converted.id '
+             'GROUP BY category '
+             'ORDER BY SUM(converted_amount) DESC')
+    cursor.execute(query)
+    df_c = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
+    df_c = insert_missing_values(df_c)
+
+    # compute the histograms
+    categories = [c for c in df_c.category]
+    values = {c:df_cd.query('category == "{}"'.format(c))['sum'].values.astype(float) for c in categories}
+
+    # spending range
+    cursor.execute('SELECT MIN(date) FROM expenses')
+    earliest = cursor.fetchall()[0][0]
+    cursor.execute('SELECT MAX(date) FROM expenses')
+    latest = cursor.fetchall()[0][0]
+    nweeks = ((latest-earliest).days)/7
+
+    # plotting utilities
+    total_width = 0.8
+    n_categories = len(categories)
+    width = total_width / n_categories
+    mid_points = np.arange(7)
+
+    # make a bar plot
+    fig, ax = plt.subplots()
+    for i, c in enumerate(categories):
+        dx = i*width + width/2. - total_width/2.
+        ax.bar(mid_points + dx, values[c]/nweeks, label=c, align='center', width=width)
+    ax.set_title('Spending per day of the week ({}\day)'.format(currency))
+    ax.set_xticks(mid_points)
+    ax.set_xticklabels(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
+    ax.grid(linestyle=':', color='k', alpha=0.2)
+    ax.legend(loc='upper left')
+    plt.savefig('weekday_{}.pdf'.format(currency))
 
 
 def main():
