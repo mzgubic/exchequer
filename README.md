@@ -2,10 +2,11 @@
 keep track of and analyse expenses
 
 # TODO:
-- spending per day of the week
 - total spending per category (columns), break down in descriptions, spell out popular items
-- document how to add exchange rate data
 - add income table
 - add income to the expenses plot
+- document how to add exchange rate data
+- improve the script which adds the rent expenses to include any other recurring cost
+- write a reasonable readme file
 - spending per year
 - automatically update table from google docs
