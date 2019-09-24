@@ -159,7 +159,7 @@ def per_month_plots(cursor, currency):
 def per_weekday_plots(cursor, currency):
  
     # total expenses per category and day of the week
-    query = ('SELECT category, DAYOFWEEK(date) as dow, SUM(converted_amount) FROM expenses '
+    query = ('SELECT category, WEEKDAY(date) as dow, SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted ON converted.id = expenses.id '
              'GROUP BY category, dow '
              'ORDER BY dow ')
@@ -170,7 +170,7 @@ def per_weekday_plots(cursor, currency):
     df_cd.reset_index(drop=True, inplace=True)
 
     # total expenses per day of the week 
-    query = ('SELECT DAYOFWEEK(date) as dow, SUM(converted_amount) AS sum FROM expenses '
+    query = ('SELECT WEEKDAY(date) as dow, SUM(converted_amount) AS sum FROM expenses '
              'LEFT JOIN converted ON expenses.id = converted.id '
              'GROUP BY dow '
              'ORDER BY dow ')
@@ -212,13 +212,11 @@ def per_weekday_plots(cursor, currency):
     for i, c in enumerate(categories):
         dx = i*width + width/2. - total_width/2.
         ax.bar(mid_points + dx, values[c], label=c, align='center', width=width)
-    print(df_d)
     for i, row in df_d.iterrows():
-        print(i, row['sum'])
         ax.text(i, ymax*1.01, '{:2.2f}'.format(row['sum']), horizontalalignment='center')
     ax.set_title('Spending per day of the week ({}\day)'.format(currency))
     ax.set_xticks(mid_points)
-    ax.set_xticklabels(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
+    ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='upper left')
     plt.savefig('weekday_{}.pdf'.format(currency))
