@@ -143,7 +143,7 @@ def per_month_plots(cursor, currency):
     ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='center right')
-    plt.savefig('monthly_stacked_{}.pdf'.format(currency))
+    plt.savefig('figures/monthly_stacked_{}.pdf'.format(currency))
 
     # unstacked plot
     fig, ax = plt.subplots()
@@ -156,7 +156,7 @@ def per_month_plots(cursor, currency):
     ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='center right')
-    plt.savefig('monthly_unstacked_{}.pdf'.format(currency))
+    plt.savefig('figures/monthly_unstacked_{}.pdf'.format(currency))
 
 
 def per_weekday_plots(cursor, currency):
@@ -222,7 +222,7 @@ def per_weekday_plots(cursor, currency):
     ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='center left')
-    plt.savefig('weekday_{}.pdf'.format(currency))
+    plt.savefig('figures/weekday_{}.pdf'.format(currency))
 
 
 def main():
@@ -234,7 +234,7 @@ def main():
     args = parser.parse_args()
 
     # delete all old pdfs
-    os.system('rm *.pdf')
+    os.system('rm figures/*.pdf')
 
     # connect
     cnx, cursor = utils.connect()
