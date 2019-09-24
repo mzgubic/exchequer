@@ -190,12 +190,16 @@ def per_weekday_plots(cursor, currency):
     categories = [c for c in df_c.category]
     values = {c:df_cd.query('category == "{}"'.format(c))['sum'].values.astype(float) for c in categories}
 
-    # spending range
+    # spending range: normalise per day
     cursor.execute('SELECT MIN(date) FROM expenses')
     earliest = cursor.fetchall()[0][0]
     cursor.execute('SELECT MAX(date) FROM expenses')
     latest = cursor.fetchall()[0][0]
     nweeks = ((latest-earliest).days)/7
+    values = {c:values[c]/nweeks for c in values}
+
+    # compute the maximum spend of a category per day
+    ymax = np.max([np.max(values[c]) for c in values])
 
     # plotting utilities
     total_width = 0.8
@@ -207,7 +211,11 @@ def per_weekday_plots(cursor, currency):
     fig, ax = plt.subplots()
     for i, c in enumerate(categories):
         dx = i*width + width/2. - total_width/2.
-        ax.bar(mid_points + dx, values[c]/nweeks, label=c, align='center', width=width)
+        ax.bar(mid_points + dx, values[c], label=c, align='center', width=width)
+    print(df_d)
+    for i, row in df_d.iterrows():
+        print(i, row['sum'])
+        ax.text(i, ymax*1.01, '{:2.2f}'.format(row['sum']), horizontalalignment='center')
     ax.set_title('Spending per day of the week ({}\day)'.format(currency))
     ax.set_xticks(mid_points)
     ax.set_xticklabels(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
