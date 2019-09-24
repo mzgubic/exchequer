@@ -168,6 +168,7 @@ def per_weekday_plots(cursor, currency):
              'ORDER BY dow ')
     cursor.execute(query)
     df_cd = pd.DataFrame(cursor.fetchall(), columns=['category', 'day', 'sum'])
+    df_cd['sum'] = df_cd['sum'].astype(float)
     df_cd = insert_missing_values(df_cd)
     df_cd.sort_values(by=['day', 'category'], inplace=True)
     df_cd.reset_index(drop=True, inplace=True)
@@ -179,6 +180,7 @@ def per_weekday_plots(cursor, currency):
              'ORDER BY dow ')
     cursor.execute(query)
     df_d = pd.DataFrame(cursor.fetchall(), columns=['day', 'sum'])
+    df_d['sum'] = df_d['sum'].astype(float)
 
     # expenses per category (descending order)
     query = ('SELECT category, sum(converted_amount) FROM expenses '
@@ -187,6 +189,7 @@ def per_weekday_plots(cursor, currency):
              'ORDER BY SUM(converted_amount) DESC')
     cursor.execute(query)
     df_c = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
+    df_c['sum'] = df_c['sum'].astype(float)
     df_c = insert_missing_values(df_c)
 
     # compute the histograms
@@ -216,7 +219,7 @@ def per_weekday_plots(cursor, currency):
         dx = i*width + width/2. - total_width/2.
         ax.bar(mid_points + dx, values[c], label=c, align='center', width=width)
     for i, row in df_d.iterrows():
-        ax.text(i, ymax*1.01, '{:2.2f}'.format(row['sum']), horizontalalignment='center')
+        ax.text(i, ymax*1.01, '{:2.2f}'.format(row['sum']/nweeks), horizontalalignment='center')
     ax.set_title('Spending per day of the week ({}\day)'.format(currency))
     ax.set_xticks(mid_points)
     ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
