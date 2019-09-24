@@ -127,6 +127,9 @@ def per_month_plots(cursor, currency):
     y = np.row_stack([values[c] for c in categories])
     y_stack = np.cumsum(y, axis=0)
 
+    # utils
+    months = {1:'Jan', 4:'Apr', 7:'Jul', 10:'Oct'}
+
     # stacked plot
     fig, ax = plt.subplots()
     for i, c in enumerate(categories):
@@ -136,10 +139,10 @@ def per_month_plots(cursor, currency):
     ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
     ax.set_xticks(range(len(df_my)))
-    ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
+    ax.set_xticklabels(['{}\n{}'.format(df_my.loc[i].year, months[df_my.loc[i].month]) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
     ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
-    ax.legend(loc='upper left')
+    ax.legend(loc='center right')
     plt.savefig('monthly_stacked_{}.pdf'.format(currency))
 
     # unstacked plot
@@ -149,10 +152,10 @@ def per_month_plots(cursor, currency):
     ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
     ax.set_xticks(range(len(df_my)))
-    ax.set_xticklabels(['{}-{}'.format(df_my.loc[i].year, df_my.loc[i].month) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
+    ax.set_xticklabels(['{}\n{}'.format(df_my.loc[i].year, months[df_my.loc[i].month]) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
     ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
-    ax.legend(loc='upper left')
+    ax.legend(loc='center right')
     plt.savefig('monthly_unstacked_{}.pdf'.format(currency))
 
 
@@ -218,7 +221,7 @@ def per_weekday_plots(cursor, currency):
     ax.set_xticks(mid_points)
     ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     ax.grid(linestyle=':', color='k', alpha=0.2)
-    ax.legend(loc='upper left')
+    ax.legend(loc='center left')
     plt.savefig('weekday_{}.pdf'.format(currency))
 
 
