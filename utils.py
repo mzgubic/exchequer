@@ -47,7 +47,7 @@ def in_table(row, cursor, table):
     for key in row.index:
         value = row.loc[key]
         if type(value) == str:
-            conditions.append("{}='{}'".format(key, value.strip()))
+            conditions.append("{}='{}'".format(key, value.strip().replace("'", "''")))
         else:
             conditions.append("{}={}".format(key, value))
             
@@ -62,7 +62,7 @@ def add_to_table(row, cursor, table):
     # build the query
     keys = list(row.index)
     values = list(row.values)
-    values = ['\''+val.strip()+'\'' if type(val) == str else str(val) for val in values]
+    values = ['\''+val.strip().replace("'", "''")+'\'' if type(val) == str else str(val) for val in values]
     query = 'INSERT INTO {} ({}) VALUES ({})'.format(table, ', '.join(keys), ', '.join(values))
 
     # and execute it
@@ -96,3 +96,4 @@ def add_df(df, cursor, table):
         if not in_table(row, cursor, table):
             print('Adding {}'.format(row))
             add_to_table(row, cursor, table)
+
