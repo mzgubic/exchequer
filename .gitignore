@@ -7,6 +7,7 @@ rent.py
 *.pdf
 private_expenses.csv
 *.csv
+expense_csvs/private_repeated.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
