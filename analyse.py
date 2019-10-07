@@ -93,6 +93,17 @@ def compute_converted(cursor, currency):
 
 def per_month_plots(cursor, currency):
 
+    # total incomes per month/year
+    query = ('SELECT YEAR(date), MONTH(date), SUM(converted_amount) FROM incomes '
+             'LEFT JOIN converted_incomes ON converted_incomes.id = incomes.id '
+             'GROUP BY YEAR(date), MONTH(date) '
+             'ORDER BY YEAR(date), MONTH(date)')
+    cursor.execute(query)
+    df_my_inc = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'sum'])
+    df_my_inc = insert_missing_values(df_my_inc)
+    df_my_inc.sort_values(by=['year', 'month'], inplace=True)
+    df_my_inc.reset_index(drop=True, inplace=True)
+
     # total expenses per month/year
     query = ('SELECT YEAR(date), MONTH(date), SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted_expenses ON converted_expenses.id = expenses.id '
@@ -135,6 +146,10 @@ def per_month_plots(cursor, currency):
     y = np.row_stack([values[c] for c in categories])
     y_stack = np.cumsum(y, axis=0)
 
+    # compute net each month
+    diff = pd.merge(df_my_inc, df_my, how='inner', on=['year', 'month'], suffixes=('_incomes', '_expenses'))
+    diff.eval('net = sum_incomes - sum_expenses', inplace=True)
+
     # utils
     months = {1:'Jan', 4:'Apr', 7:'Jul', 10:'Oct'}
 
@@ -142,7 +157,9 @@ def per_month_plots(cursor, currency):
     fig, ax = plt.subplots()
     for i, c in enumerate(categories):
         ax.fill_between(range(len(df_my)), 0 if i==0 else y_stack[i-1, :], y_stack[i, :], label=c, alpha=0.7)
-    ax.plot(range(len(df_my)), df_my['sum'], c='k', label='total')
+    ax.plot(range(len(df_my)), df_my['sum'], c='k')
+    ax.plot(earliest+np.arange(len(diff)), diff['sum_expenses'], c='k', label='total expenses')
+    ax.plot(earliest+np.arange(len(diff)), diff['sum_incomes'], c='g', label='total income')
 
     ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
