@@ -157,9 +157,9 @@ def per_month_plots(cursor, currency):
     fig, ax = plt.subplots()
     for i, c in enumerate(categories):
         ax.fill_between(range(len(df_my)), 0 if i==0 else y_stack[i-1, :], y_stack[i, :], label=c, alpha=0.7)
-    ax.plot(range(len(df_my)), df_my['sum'], c='k')
     ax.plot(earliest+np.arange(len(diff)), diff['sum_expenses'], c='k', label='total expenses')
     ax.plot(earliest+np.arange(len(diff)), diff['sum_incomes'], c='g', label='total income')
+    ax.plot(range(len(df_my)), df_my['sum'], c='k') # double check on the plot that indices work out
 
     ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
