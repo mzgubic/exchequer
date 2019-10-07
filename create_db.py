@@ -24,6 +24,15 @@ def main():
                               'description VARCHAR(255) NOT NULL,'
                               'PRIMARY KEY (id) )')
 
+    table_defs['incomes'] = ('CREATE TABLE incomes ('
+                             'id INT NOT NULL AUTO_INCREMENT,'
+                             'date DATE,'
+                             'amount DECIMAL(10, 2) NOT NULL,'
+                             'currency VARCHAR(3) NOT NULL,'
+                             'category VARCHAR(20) NOT NULL,'
+                             'description VARCHAR(255) NOT NULL,'
+                             'PRIMARY KEY (id) )')
+
     table_defs['fx'] = ('CREATE TABLE fx ( '
                         'id INT NOT NULL AUTO_INCREMENT,'
                         'date DATE,'

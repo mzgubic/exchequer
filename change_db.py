@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import argparse
 import mysql.connector
@@ -20,7 +21,11 @@ def main():
     if args.csv:
         for csv_path in args.csv:
             utils.add_csv(csv_path, cursor, 'expenses')
-    
+
+    else:
+        utils.add_csv('expense_csvs/private_individual.csv', cursor, 'expenses')
+        utils.add_csv('income_csvs/income.csv', cursor, 'incomes')
+       
 
 if __name__ == '__main__':
     main()
