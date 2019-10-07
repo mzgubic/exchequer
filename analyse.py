@@ -68,19 +68,27 @@ def compute_converted(cursor, currency):
     # compute the average exchange rates
     avg_rates = {c:get_avg_fx(from_cur=c, to_cur=currency, cursor=cursor) for c in foreign_cs}
 
-    try:
-        cursor.execute('DROP VIEW converted_expenses')
-    except mysql.connector.errors.ProgrammingError:
-        print('cant delete converted_expenses')
+    # create converted view
+    def create_view(origin_table):
 
-    # build the query
-    whens = ['WHEN currency=\'{}\' THEN amount*IFNULL(value, {})'.format(c, avg_rates[c]) for c in foreign_cs]
-    query = 'CREATE VIEW converted_expenses AS ' + \
-            'SELECT expenses.id, ' + \
-                   '(CASE WHEN currency=\'{}\' THEN amount {} ELSE amount END) AS converted_amount '.format(currency, ' '.join(whens)) + \
-            'FROM expenses LEFT JOIN fx ON ' + \
-            'expenses.date=fx.date AND expenses.currency=fx.from_cur AND fx.to_cur=\'{}\''.format(currency)
-    cursor.execute(query)
+        # try deleting the old view 
+        try:
+            cursor.execute('DROP VIEW converted_{}'.format(origin_table))
+        except mysql.connector.errors.ProgrammingError:
+            print('cant delete converted_{}'.format(origin_table))
+
+        # build the query
+        whens = ['WHEN currency=\'{}\' THEN amount*IFNULL(value, {})'.format(c, avg_rates[c]) for c in foreign_cs]
+        query = 'CREATE VIEW converted_{} AS '.format(origin_table) + \
+                'SELECT {}.id, '.format(origin_table) + \
+                       '(CASE WHEN currency=\'{}\' THEN amount {} ELSE amount END) AS converted_amount '.format(currency, ' '.join(whens)) + \
+                'FROM {} LEFT JOIN fx ON '.format(origin_table) + \
+                '{o}.date=fx.date AND {o}.currency=fx.from_cur AND fx.to_cur=\'{c}\''.format(o=origin_table, c=currency)
+        cursor.execute(query)
+
+    # for expenses and income
+    create_view('expenses')
+    create_view('incomes')
 
 
 def per_month_plots(cursor, currency):
