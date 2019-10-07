@@ -69,13 +69,13 @@ def compute_converted(cursor, currency):
     avg_rates = {c:get_avg_fx(from_cur=c, to_cur=currency, cursor=cursor) for c in foreign_cs}
 
     try:
-        cursor.execute('DROP VIEW converted')
+        cursor.execute('DROP VIEW converted_expenses')
     except mysql.connector.errors.ProgrammingError:
-        print('cant delete converted')
+        print('cant delete converted_expenses')
 
     # build the query
     whens = ['WHEN currency=\'{}\' THEN amount*IFNULL(value, {})'.format(c, avg_rates[c]) for c in foreign_cs]
-    query = 'CREATE VIEW converted AS ' + \
+    query = 'CREATE VIEW converted_expenses AS ' + \
             'SELECT expenses.id, ' + \
                    '(CASE WHEN currency=\'{}\' THEN amount {} ELSE amount END) AS converted_amount '.format(currency, ' '.join(whens)) + \
             'FROM expenses LEFT JOIN fx ON ' + \
@@ -87,7 +87,7 @@ def per_month_plots(cursor, currency):
 
     # total expenses per month/year
     query = ('SELECT YEAR(date), MONTH(date), SUM(converted_amount) FROM expenses '
-             'LEFT JOIN converted ON converted.id = expenses.id '
+             'LEFT JOIN converted_expenses ON converted_expenses.id = expenses.id '
              'GROUP BY YEAR(date), MONTH(date) '
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
@@ -98,7 +98,7 @@ def per_month_plots(cursor, currency):
 
     # expenses per month/year/category
     query = ('SELECT YEAR(date), MONTH(date), category, SUM(converted_amount) FROM expenses '
-             'LEFT JOIN converted ON converted.id = expenses.id '
+             'LEFT JOIN converted_expenses ON converted_expenses.id = expenses.id '
              'GROUP BY YEAR(date), MONTH(date), category '
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
@@ -109,7 +109,7 @@ def per_month_plots(cursor, currency):
 
     # expenses per category (descending order)
     query = ('SELECT category, sum(converted_amount) FROM expenses '
-             'LEFT JOIN converted ON expenses.id = converted.id '
+             'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
              'GROUP BY category '
              'ORDER BY SUM(converted_amount) DESC')
     cursor.execute(query)
@@ -163,7 +163,7 @@ def per_weekday_plots(cursor, currency):
  
     # total expenses per category and day of the week
     query = ('SELECT category, WEEKDAY(date) as dow, SUM(converted_amount) FROM expenses '
-             'LEFT JOIN converted ON converted.id = expenses.id '
+             'LEFT JOIN converted_expenses ON converted_expenses.id = expenses.id '
              'GROUP BY category, dow '
              'ORDER BY dow ')
     cursor.execute(query)
@@ -175,7 +175,7 @@ def per_weekday_plots(cursor, currency):
 
     # total expenses per day of the week 
     query = ('SELECT WEEKDAY(date) as dow, SUM(converted_amount) AS sum FROM expenses '
-             'LEFT JOIN converted ON expenses.id = converted.id '
+             'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
              'GROUP BY dow '
              'ORDER BY dow ')
     cursor.execute(query)
@@ -184,7 +184,7 @@ def per_weekday_plots(cursor, currency):
 
     # expenses per category (descending order)
     query = ('SELECT category, sum(converted_amount) FROM expenses '
-             'LEFT JOIN converted ON expenses.id = converted.id '
+             'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
              'GROUP BY category '
              'ORDER BY SUM(converted_amount) DESC')
     cursor.execute(query)
