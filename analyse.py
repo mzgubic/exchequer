@@ -160,6 +160,9 @@ def per_month_plots(cursor, currency):
     ax.plot(earliest+np.arange(len(diff)), diff['sum_expenses'], c='k', label='total expenses')
     ax.plot(earliest+np.arange(len(diff)), diff['sum_incomes'], c='g', label='total income')
     ax.plot(range(len(df_my)), df_my['sum'], c='k') # double check on the plot that indices work out
+    for i, (income, net) in enumerate(zip(diff['sum_incomes'], diff['net'])):
+        ax.text(i+earliest, float(income)*1.01, '{:2.0f}'.format(net), horizontalalignment='center', c='g' if net>0 else
+        'r', size=8)
 
     ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
