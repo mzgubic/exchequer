@@ -8,7 +8,7 @@ def main():
 
     # parse arguments
     parser = argparse.ArgumentParser(description='add data to the fx table')
-    parser.add_argument('--csv', type=str, default='EUR_GBP.csv',
+    parser.add_argument('--csv', type=str, default='fx_csvs/EUR_GBP.csv',
                         help='csv file from which to read the fx rates')
     parser.add_argument('--from', type=str, default='EUR',
                         help='rate from currency')
