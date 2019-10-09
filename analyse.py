@@ -5,12 +5,16 @@ import itertools
 import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from cycler import cycler
 import mysql.connector
 from mysql.connector import errorcode
 import utils
 
-from pandas.plotting import register_matplotlib_converters
-register_matplotlib_converters()
+colours = [[int(256*c[i]) for i in range(3)] for c in plt.get_cmap('Paired').colors]
+colours = [tuple([x-1 if x==256 else x for x in l]) for l in colours]
+colours = ['#%02x%02x%02x' % tuple([n for n in l]) for l in colours]
+mpl.rcParams['axes.prop_cycle'] = cycler('color', colours)
 
 
 def insert_missing_values(df):
