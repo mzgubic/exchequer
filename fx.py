@@ -20,7 +20,7 @@ def main():
     cnx, cursor = utils.connect()
     cursor.execute('USE {}'.format(utils.db_name))
 
-    # add the from to information
+    # add the 'from, to' information
     df = pd.read_csv(args.csv)
     df['from_cur'] = getattr(args, 'from')
     df['to_cur'] = args.to
@@ -33,7 +33,7 @@ def main():
     rev_df = df.copy()
     rev_df['from_cur'] = args.to
     rev_df['to_cur'] = getattr(args, 'from')
-    rev_df['value'] = 1./rev_df.value
+    rev_df['value'] = round(1./rev_df.value, 4)
     utils.add_df(rev_df, cursor, 'fx')
 
 
