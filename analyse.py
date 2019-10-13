@@ -252,13 +252,45 @@ def per_weekday_plots(cursor, currency):
         ax.bar(mid_points + dx, values[c], label=c, align='center', width=width)
     for i, row in df_d.iterrows():
         ax.text(i, ymax*1.01, '{:2.2f}'.format(row['sum']/nweeks), horizontalalignment='center')
-    ax.set_title('Spending per day of the week ({}\day)'.format(currency))
+    ax.set_title('Spending per day of the week ({}/day)'.format(currency))
     ax.set_xticks(mid_points)
     ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     ax.grid(linestyle=':', color='k', alpha=0.2)
     ax.legend(loc='center left')
     plt.savefig('figures/weekday_{}.pdf'.format(currency))
 
+
+def per_category_plots(cursor, currency):
+
+    # expenses per category (descending order)
+    query = ('SELECT category, sum(converted_amount) FROM expenses '
+             'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
+             'GROUP BY category '
+             'ORDER BY SUM(converted_amount) DESC')
+    cursor.execute(query)
+    df_c = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
+    df_c['sum'] = df_c['sum'].astype(float)
+    df_c = insert_missing_values(df_c)
+
+    # compute total number of weeks
+    cursor.execute('SELECT MIN(date) FROM expenses')
+    earliest = cursor.fetchall()[0][0]
+    cursor.execute('SELECT MAX(date) FROM expenses')
+    latest = cursor.fetchall()[0][0]
+    nmonths = ((latest-earliest).days)/(365.25/12)
+
+    # make the plot
+    fig, ax = plt.subplots()
+    n_cat = len(df_c['category'])
+    ax.grid(linestyle=':', color='k', alpha=0.2)
+    for i in range(n_cat):
+        ax.bar(i, df_c.iloc[i]['sum']/nmonths, align='center')
+    ax.set_ylim(0,120)
+    ax.set_ylabel('{}/month'.format(currency))
+    ax.set_xticks(range(n_cat))
+    ax.set_xticklabels(df_c['category'].values, rotation=25)
+    ax.set_title('Spending per category ({}/month)'.format(currency))
+    plt.savefig('figures/categories_{}.pdf'.format(currency))
 
 def main():
 
@@ -283,6 +315,9 @@ def main():
 
     # per weekday plot
     per_weekday_plots(cursor, args.currency)
+
+    # total categories plot
+    per_category_plots(cursor, args.currency)
 
     
 
