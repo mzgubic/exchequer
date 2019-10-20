@@ -194,10 +194,12 @@ def per_month_plots(cursor, currency):
 def per_weekday_plots(cursor, currency):
  
     # total expenses per category and day of the week
+    today = str(pd.Timestamp.today().date())
     query = ('SELECT category, WEEKDAY(date) as dow, SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted_expenses ON converted_expenses.id = expenses.id '
+             'WHERE expenses.date < "{}" '
              'GROUP BY category, dow '
-             'ORDER BY dow ')
+             'ORDER BY dow '.format(today))
     cursor.execute(query)
     df_cd = pd.DataFrame(cursor.fetchall(), columns=['category', 'day', 'sum'])
     df_cd['sum'] = df_cd['sum'].astype(float)
@@ -208,8 +210,9 @@ def per_weekday_plots(cursor, currency):
     # total expenses per day of the week 
     query = ('SELECT WEEKDAY(date) as dow, SUM(converted_amount) AS sum FROM expenses '
              'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
+             'WHERE expenses.date < "{}" '
              'GROUP BY dow '
-             'ORDER BY dow ')
+             'ORDER BY dow '.format(today))
     cursor.execute(query)
     df_d = pd.DataFrame(cursor.fetchall(), columns=['day', 'sum'])
     df_d['sum'] = df_d['sum'].astype(float)
@@ -217,8 +220,9 @@ def per_weekday_plots(cursor, currency):
     # expenses per category (descending order)
     query = ('SELECT category, sum(converted_amount) FROM expenses '
              'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
+             'WHERE expenses.date < "{}" '
              'GROUP BY category '
-             'ORDER BY SUM(converted_amount) DESC')
+             'ORDER BY SUM(converted_amount) DESC'.format(today))
     cursor.execute(query)
     df_c = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
     df_c['sum'] = df_c['sum'].astype(float)
@@ -231,9 +235,8 @@ def per_weekday_plots(cursor, currency):
     # spending range: normalise per day
     cursor.execute('SELECT MIN(date) FROM expenses')
     earliest = cursor.fetchall()[0][0]
-    cursor.execute('SELECT MAX(date) FROM expenses')
-    latest = cursor.fetchall()[0][0]
-    nweeks = ((latest-earliest).days)/7
+    today = pd.Timestamp.today().date()
+    nweeks = ((today-earliest).days)/7
     values = {c:values[c]/nweeks for c in values}
 
     # compute the maximum spend of a category per day
@@ -300,7 +303,7 @@ def main():
     args = parser.parse_args()
 
     # delete all old pdfs
-    os.system('rm figures/*.pdf')
+    #os.system('rm figures/*.pdf')
 
     # connect
     cnx, cursor = utils.connect()
