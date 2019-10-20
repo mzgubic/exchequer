@@ -253,13 +253,12 @@ def per_weekday_plots(cursor, currency):
     for i, c in enumerate(categories):
         dx = i*width + width/2. - total_width/2.
         ax.bar(mid_points + dx, values[c], label=c, align='center', width=width)
-    for i, row in df_d.iterrows():
-        ax.text(i, ymax*1.01, '{:2.2f}'.format(row['sum']/nweeks), horizontalalignment='center')
+    ax.plot(mid_points, df_d['sum']/nweeks, 'k', label='total expenses')
     ax.set_title('Spending per day of the week ({}/day)'.format(currency))
     ax.set_xticks(mid_points)
     ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     ax.grid(linestyle=':', color='k', alpha=0.2)
-    ax.legend(loc='center left')
+    ax.legend(loc='upper left')
     plt.savefig('figures/weekday_{}.pdf'.format(currency))
 
 
@@ -303,7 +302,7 @@ def main():
     args = parser.parse_args()
 
     # delete all old pdfs
-    #os.system('rm figures/*.pdf')
+    os.system('rm figures/*.pdf')
 
     # connect
     cnx, cursor = utils.connect()
