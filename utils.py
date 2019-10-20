@@ -49,7 +49,7 @@ def in_table(row, cursor, table):
         if type(value) == str:
             conditions.append("{}='{}'".format(key, value.strip().replace("'", "''")))
         else:
-            conditions.append("{}={}".format(key, value))
+            conditions.append("{}={:.2f}".format(key, value))
             
     # execute SQL query and record the results
     condition = '({})'.format(' AND '.join(conditions))

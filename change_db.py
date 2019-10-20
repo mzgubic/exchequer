@@ -24,6 +24,7 @@ def main():
 
     else:
         utils.add_csv('expense_csvs/private_individual.csv', cursor, 'expenses')
+        utils.add_csv('expense_csvs/repeated.csv', cursor, 'expenses')
         utils.add_csv('income_csvs/income.csv', cursor, 'incomes')
        
 
