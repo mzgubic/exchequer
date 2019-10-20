@@ -272,12 +272,11 @@ def per_category_plots(cursor, currency):
     df_c['sum'] = df_c['sum'].astype(float)
     df_c = insert_missing_values(df_c)
 
-    # compute total number of weeks
+    # compute total number of months
     cursor.execute('SELECT MIN(date) FROM expenses')
     earliest = cursor.fetchall()[0][0]
-    cursor.execute('SELECT MAX(date) FROM expenses')
-    latest = cursor.fetchall()[0][0]
-    nmonths = ((latest-earliest).days)/(365.25/12)
+    today = pd.Timestamp.today().date()
+    nmonths = ((today-earliest).days)/(365.25/12)
 
     # make the plot
     fig, ax = plt.subplots()
@@ -285,7 +284,7 @@ def per_category_plots(cursor, currency):
     ax.grid(linestyle=':', color='k', alpha=0.2)
     for i in range(n_cat):
         ax.bar(i, df_c.iloc[i]['sum']/nmonths, align='center')
-    ax.set_ylim(0,120)
+    ax.set_ylim(0,300)
     ax.set_ylabel('{}/month'.format(currency))
     ax.set_xticks(range(n_cat))
     ax.set_xticklabels(df_c['category'].values, rotation=25)
