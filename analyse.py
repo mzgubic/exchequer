@@ -197,7 +197,7 @@ def per_weekday_plots(cursor, currency):
     today = str(pd.Timestamp.today().date())
     query = ('SELECT category, WEEKDAY(date) as dow, SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted_expenses ON converted_expenses.id = expenses.id '
-             'WHERE expenses.date < "{}" '
+             'WHERE expenses.date <= "{}" '
              'GROUP BY category, dow '
              'ORDER BY dow '.format(today))
     cursor.execute(query)
@@ -210,7 +210,7 @@ def per_weekday_plots(cursor, currency):
     # total expenses per day of the week 
     query = ('SELECT WEEKDAY(date) as dow, SUM(converted_amount) AS sum FROM expenses '
              'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
-             'WHERE expenses.date < "{}" '
+             'WHERE expenses.date <= "{}" '
              'GROUP BY dow '
              'ORDER BY dow '.format(today))
     cursor.execute(query)
@@ -220,7 +220,7 @@ def per_weekday_plots(cursor, currency):
     # expenses per category (descending order)
     query = ('SELECT category, sum(converted_amount) FROM expenses '
              'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
-             'WHERE expenses.date < "{}" '
+             'WHERE expenses.date <= "{}" '
              'GROUP BY category '
              'ORDER BY SUM(converted_amount) DESC'.format(today))
     cursor.execute(query)
