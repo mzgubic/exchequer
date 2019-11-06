@@ -194,12 +194,12 @@ def per_month_plots(cursor, currency):
 def per_weekday_plots(cursor, currency):
  
     # total expenses per category and day of the week
-    today = str(pd.Timestamp.today().date())
+    tomorrow = str(pd.Timestamp.today().date() + datetime.timedelta(days=1))
     query = ('SELECT category, WEEKDAY(date) as dow, SUM(converted_amount) FROM expenses '
              'LEFT JOIN converted_expenses ON converted_expenses.id = expenses.id '
              'WHERE expenses.date < "{}" '
              'GROUP BY category, dow '
-             'ORDER BY dow '.format(today))
+             'ORDER BY dow '.format(tomorrow))
     cursor.execute(query)
     df_cd = pd.DataFrame(cursor.fetchall(), columns=['category', 'day', 'sum'])
     df_cd['sum'] = df_cd['sum'].astype(float)
@@ -212,7 +212,7 @@ def per_weekday_plots(cursor, currency):
              'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
              'WHERE expenses.date < "{}" '
              'GROUP BY dow '
-             'ORDER BY dow '.format(today))
+             'ORDER BY dow '.format(tomorrow))
     cursor.execute(query)
     df_d = pd.DataFrame(cursor.fetchall(), columns=['day', 'sum'])
     df_d['sum'] = df_d['sum'].astype(float)
@@ -222,7 +222,7 @@ def per_weekday_plots(cursor, currency):
              'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
              'WHERE expenses.date < "{}" '
              'GROUP BY category '
-             'ORDER BY SUM(converted_amount) DESC'.format(today))
+             'ORDER BY SUM(converted_amount) DESC'.format(tomorrow))
     cursor.execute(query)
     df_c = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
     df_c['sum'] = df_c['sum'].astype(float)
