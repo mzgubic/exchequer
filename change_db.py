@@ -20,12 +20,12 @@ def main():
     # add entries via a csv file
     if args.csv:
         for csv_path in args.csv:
-            utils.add_csv(csv_path, cursor, 'expenses')
+            utils.add_csv(csv_path, cursor, 'expenses', precision=2)
 
     else:
-        utils.add_csv('expense_csvs/private_individual.csv', cursor, 'expenses')
-        utils.add_csv('expense_csvs/repeated.csv', cursor, 'expenses')
-        utils.add_csv('income_csvs/income.csv', cursor, 'incomes')
+        utils.add_csv('expense_csvs/private_individual.csv', cursor, 'expenses', precision=2)
+        utils.add_csv('expense_csvs/repeated.csv', cursor, 'expenses', precision=2)
+        utils.add_csv('income_csvs/income.csv', cursor, 'incomes', precision=2)
        
 
 if __name__ == '__main__':

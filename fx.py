@@ -22,19 +22,20 @@ def main():
 
     # add the 'from, to' information
     df = pd.read_csv(args.csv)
+    df.columns=[c.strip() for c in df.columns]
     df['from_cur'] = getattr(args, 'from')
     df['to_cur'] = args.to
     df['date'] = pd.to_datetime(df.date, dayfirst=True).astype(str) # format correctly
 
     # add entries via a csv file
-    utils.add_df(df, cursor, 'fx')
+    utils.add_df(df, cursor, 'fx', precision=4)
 
     # add also the reverse exchange rate
     rev_df = df.copy()
     rev_df['from_cur'] = args.to
     rev_df['to_cur'] = getattr(args, 'from')
     rev_df['value'] = round(1./rev_df.value, 4)
-    utils.add_df(rev_df, cursor, 'fx')
+    utils.add_df(rev_df, cursor, 'fx', precision=4)
 
 
 if __name__ == '__main__':

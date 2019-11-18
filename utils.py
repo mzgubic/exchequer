@@ -40,7 +40,7 @@ def print_table(cursor, table):
         print(row)
 
 
-def in_table(row, cursor, table):
+def in_table(row, cursor, table, precision):
 
     # add conditions
     conditions = []
@@ -49,7 +49,7 @@ def in_table(row, cursor, table):
         if type(value) == str:
             conditions.append("{}='{}'".format(key, value.strip().replace("'", "''")))
         else:
-            conditions.append("{}={:.2f}".format(key, value))
+            conditions.append(("{}={:."+str(precision)+"f}").format(key, value))
             
     # execute SQL query and record the results
     condition = '({})'.format(' AND '.join(conditions))
@@ -77,14 +77,14 @@ def check_df(df):
             print('missing {} key'.format(key))
             exit(1)
 
-def add_csv(csv_path, cursor, table):
+def add_csv(csv_path, cursor, table, precision):
 
     # extract the dataframe
     df = pd.read_csv(csv_path)
     check_df(df)
-    add_df(df, cursor, table)
+    add_df(df, cursor, table, precision)
 
-def add_df(df, cursor, table):
+def add_df(df, cursor, table, precision):
 
     # loop over the rows in the dataframe
     for i in df.index:
@@ -93,7 +93,7 @@ def add_df(df, cursor, table):
         row = df.loc[i]
 
         # check if the item is not already in the database
-        if not in_table(row, cursor, table):
+        if not in_table(row, cursor, table, precision):
             print('Adding {}'.format(row))
             add_to_table(row, cursor, table)
 
