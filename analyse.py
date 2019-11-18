@@ -131,10 +131,12 @@ def per_month_plots(cursor, currency):
     df_myc.reset_index(drop=True, inplace=True)
 
     # expenses per category (descending order)
+    today = str(pd.Timestamp.today().date())
     query = ('SELECT category, sum(converted_amount) FROM expenses '
              'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
+             'WHERE expenses.date <= "{}" '
              'GROUP BY category '
-             'ORDER BY SUM(converted_amount) DESC')
+             'ORDER BY SUM(converted_amount) DESC'.format(today))
     cursor.execute(query)
     df_c = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
     df_c = insert_missing_values(df_c)
@@ -265,10 +267,12 @@ def per_weekday_plots(cursor, currency):
 def per_category_plots(cursor, currency):
 
     # expenses per category (descending order)
+    today = str(pd.Timestamp.today().date())
     query = ('SELECT category, sum(converted_amount) FROM expenses '
              'LEFT JOIN converted_expenses ON expenses.id = converted_expenses.id '
+             'WHERE expenses.date <= "{}" '
              'GROUP BY category '
-             'ORDER BY SUM(converted_amount) DESC')
+             'ORDER BY SUM(converted_amount) DESC'.format(today))
     cursor.execute(query)
     df_c = pd.DataFrame(cursor.fetchall(), columns=['category', 'sum'])
     df_c['sum'] = df_c['sum'].astype(float)
