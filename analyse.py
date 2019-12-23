@@ -42,6 +42,26 @@ def insert_missing_values(df):
 
     return df
 
+def insert_missing_months(df):
+    """
+    Makes sure all months have some value, even if zero.
+    """
+
+    columns = df.columns.values
+    groups = {c:np.unique(df[c]) for c in columns if c != 'sum'}
+    if 'month' in groups and 'year' in groups:
+        groups['month'] = np.arange(1, 13)
+
+        year = groups['year'][0]
+        for month in groups['month']:
+            try:
+                v = df.query('year==@year and month==@month')['sum'].iloc[0]
+            except IndexError:
+                row = {'year':year, 'month':month, 'sum':0}
+                df = df.append(row, ignore_index=True)
+
+    return df
+
 
 def get_avg_fx(from_cur, to_cur, cursor):
 
@@ -104,6 +124,7 @@ def per_month_plots(cursor, currency):
              'ORDER BY YEAR(date), MONTH(date)')
     cursor.execute(query)
     df_my_inc = pd.DataFrame(cursor.fetchall(), columns=['year', 'month', 'sum'])
+    df_my_inc = insert_missing_months(df_my_inc)
     df_my_inc = insert_missing_values(df_my_inc)
     df_my_inc.sort_values(by=['year', 'month'], inplace=True)
     df_my_inc.reset_index(drop=True, inplace=True)
@@ -163,12 +184,14 @@ def per_month_plots(cursor, currency):
     fig, ax = plt.subplots()
     for i, c in enumerate(categories):
         ax.fill_between(range(len(df_my)), 0 if i==0 else y_stack[i-1, :], y_stack[i, :], label=c, alpha=0.7)
-    ax.plot(earliest+np.arange(len(diff)), diff['sum_expenses'], c='k', label='total expenses')
-    ax.plot(earliest+np.arange(len(diff)), diff['sum_incomes'], c='g', label='total income')
-    ax.plot(range(len(df_my)), df_my['sum'], c='k') # double check on the plot that indices work out
+    ax.plot(range(len(diff)), diff['sum_expenses'], c='k', label='total expenses')
+    ax.plot(range(len(diff)), diff['sum_incomes'], c='g', label='total income')
+    # add text for the net values
     for i, (income, net) in enumerate(zip(diff['sum_incomes'], diff['net'])):
-        ax.text(i+earliest, float(income)*1.01, '{:2.0f}'.format(net), horizontalalignment='center', c='g' if net>0 else
-        'r', size=8)
+        if i < earliest or i > latest:
+            continue
+        yloc = 1.01 * max(float(income), float(income-net))
+        ax.text(i, yloc, '{:2.0f}'.format(net), horizontalalignment='center', c='g' if net>0 else 'r', size=8)
 
     ax.set_title('Monthly spending ({}/month)'.format(currency))
     ax.set_ylim(0, ax.get_ylim()[1])
@@ -176,7 +199,7 @@ def per_month_plots(cursor, currency):
     ax.set_xticklabels(['{}\n{}'.format(df_my.loc[i].year, months[df_my.loc[i].month]) if df_my.loc[i].month in [1, 4, 7, 10] else '' for i in range(len(df_my))])
     ax.set_xlim(earliest, latest)
     ax.grid(linestyle=':', color='k', alpha=0.2)
-    ax.legend(loc='center right')
+    ax.legend(loc='upper right')
     plt.savefig('figures/monthly_stacked_{}.pdf'.format(currency))
 
     # unstacked plot
