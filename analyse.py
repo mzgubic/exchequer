@@ -182,10 +182,10 @@ def per_month_plots(cursor, currency):
 
     # stacked plot
     fig, ax = plt.subplots()
+    ax.plot(range(len(diff)), diff['sum_incomes'], c='k', label='total income', linestyle=':')
     for i, c in enumerate(categories):
         ax.fill_between(range(len(df_my)), 0 if i==0 else y_stack[i-1, :], y_stack[i, :], label=c, alpha=0.7)
     ax.plot(range(len(diff)), diff['sum_expenses'], c='k', label='total expenses')
-    ax.plot(range(len(diff)), diff['sum_incomes'], c='g', label='total income')
     # add text for the net values
     for i, (income, net) in enumerate(zip(diff['sum_incomes'], diff['net'])):
         if i < earliest or i > latest:
