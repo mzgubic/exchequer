@@ -2,4 +2,5 @@ include("src/Exchequer.jl")
 
 using .Exchequer
 
-hi()
+Exchequer.move_downloads()
+df_expenses = Exchequer.load_expenses()
