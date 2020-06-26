@@ -12,7 +12,7 @@ export load_expenses, load_incomes, load_fxs
 export exchange!
 export aggregate
 
-colors = colorschemes[:Set3_12][1:end]
+colors = colorschemes[:Paired_12][1:end]
 
 include("preprocessing.jl")
 include("aggregation.jl")

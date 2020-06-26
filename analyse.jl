@@ -14,7 +14,7 @@ end
 function plot_categories(expenses::DataFrame)
 
     # sort the categories by total spent
-    categories = Exchequer.aggregate(df_expenses, "category")
+    categories = Exchequer.aggregate(expenses, "category")
     sort!(categories, :amount_sum, rev=true)
 
     nmonths = months(expenses)
@@ -26,12 +26,26 @@ function plot_categories(expenses::DataFrame)
         ylabel="Monthly spending ($currency)",
         fillcolor=Exchequer.colors,
         legend=nothing)
+    ylims!((0, ylims()[2]))
 
     # save
     savefig("figures/categories.pdf")
 
 end
 
+function plot_monthly(expenses::DataFrame)
+
+    # sort the categories by total spent
+    categories = Exchequer.aggregate(expenses, "category")
+    sort!(categories, :amount_sum, rev=true)
+
+    # sort by year and month and category
+    groups = Exchequer.aggregate(expenses, "year", "month", "category")
+    fill_zeros!(groups)
+    
+    return groups
+
+end
 
 function main()
 
@@ -47,7 +61,9 @@ function main()
     Exchequer.exchange!(df_expenses, "EUR", df_fxs)
 
     # plot away
-    plot_categories(df_expenses)
+    #plot_categories(df_expenses)
+    return plot_monthly(df_expenses)
+
 
 end
 
