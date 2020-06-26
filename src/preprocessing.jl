@@ -7,15 +7,15 @@ function move_downloads()
         # order matters
         if occursin("Income", fname)
             println(fname)
-            mv(dl_dir*fname, "data/income/"*fname)
+            mv(dl_dir*fname, "data/income/"*fname, force=true)
 
         elseif occursin("Expenses", fname)
             println(fname)
-            mv(dl_dir*fname, "data/expense/"*fname)
+            mv(dl_dir*fname, "data/expense/"*fname, force=true)
 
         elseif occursin("exchange", fname)
             println(fname)
-            mv(dl_dir*fname, "data/fx/"*fname)
+            mv(dl_dir*fname, "data/fx/"*fname, force=true)
         end
 
     end
