@@ -1,11 +1,3 @@
-function months(df::DataFrame)::Float64
-
-    dayinmonth = 365.25 / 12
-    ndays = Dates.value(maximum(df.date) - minimum(df.date))
-    return ndays / dayinmonth
-    
-end
-
 
 function plot_categories(expenses::DataFrame)
 
@@ -20,41 +12,13 @@ function plot_categories(expenses::DataFrame)
     bar(categories.category, categories.amount_sum / nmonths,
         xrotation=20,
         ylabel="Monthly spending ($currency)",
-        fillcolor=Exchequer.colors,
+        fillcolor=COLORS,
         legend=nothing)
     ylims!((0, ylims()[2]))
 
     # save
     savefig("figures/categories.pdf")
 
-end
-
-function fill_zeros!(groups::DataFrame)::DataFrame
-
-    # get the earliest and latest months
-    e_year = minimum(groups.year)
-    e_month = minimum(groups.month[groups.year .== e_year])
-    l_year = maximum(groups.year)
-    l_month = maximum(groups.month[groups.year .== l_year])
-
-    # get all distinct categories
-    categories = unique(groups.category)
-
-    # loop over all years and months
-    for date in Date(e_year, e_month):Dates.Month(1):Date(l_year, l_month)
-        y, m = year(date), month(date)
-        #println(y, m)
-        for category in categories
-            cut = (groups.year.==y) .& (groups.month.==m) .& (groups.category.==category)
-            #println(groups[cut, :])
-            if nrow(groups[cut, :]) == 0
-                #println("missing")
-                push!(groups, (year=y, month=m, category=category, amount_sum=0))
-            end
-        end
-    end
-
-    return groups
 end
 
 function plot_monthly(expenses::DataFrame)
@@ -67,8 +31,43 @@ function plot_monthly(expenses::DataFrame)
     groups = Exchequer.aggregate(expenses, "year", "month", "category")
     fill_zeros!(groups)
 
-    #return groups
+    # make figures
+    currency = expenses.currency[1]
+    plot_unstacked(categories, groups, currency)
 
 end
+
+function plot_unstacked(categories::DataFrame, groups::DataFrame, currency::String)
+    
+    # clear the figure
+    plot()
+
+    # and show every category separately
+    for (cat, color) in zip(categories.category, COLORS)
+
+        # select the spending and construct dates
+        spending = groups[groups.category .== cat, :]
+        xpos = [i for i in 1:1:nrow(spending)]
+
+        plot!(xpos, spending.amount_sum, label=cat, color=color, linewidth=2)
+    end
+
+    # xticks cosmetics
+    spending = groups[groups.category .== "sport", :]
+    xpos = [i for i in 1:1:nrow(spending)]
+    yearmonths = zip(spending.year, spending.month)
+    labels = [m == 1 ? "$(MONTHS[m])\n$y" : "$(MONTHS[m])" for (y,m) in yearmonths]
+    xticks!(xpos, labels)
+
+    # ylabel
+    ylabel!("Monthly spending ($currency)")
+
+    # save
+    savefig("figures/monthly_unstacked.pdf")
+
+end
+
+
+
 
 
