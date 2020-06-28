@@ -95,6 +95,9 @@ function plot_stacked(categories::DataFrame,
     lowers = cs[1:end-1, :]
     uppers = cs[2:end, :]
 
+    total_expense = uppers[end,:]
+    total_income = inc_groups.amount_sum
+
     # plot mains
     xpos = [i for i in 1:1:nmonth]
     for (i, c) in enumerate(categories.category)
@@ -103,10 +106,15 @@ function plot_stacked(categories::DataFrame,
     end
 
     # plot income
-    println(inc_groups)
     plot!(xpos, inc_groups.amount_sum,
-          linewidth=2, linecolor="black", linestyle=:dot,
-          label="income")
+          linewidth=2, linecolor="black", linestyle=:dot, label="income")
+
+    # plot net numbers
+    net = [trunc(Int, n) for n in total_income - total_expense]
+    ypos = [max(a, b)+50 for (a, b) in zip(total_income, total_expense)]
+    texts = [(x, y, text(n, 7, :left, n > 0 ? :green : :red,))
+             for (x, y, n) in zip(xpos, ypos, net)]
+    annotate!(texts)
 
     # xticks cosmetics
     spending = exp_groups[exp_groups.category .== "sport", :]
