@@ -11,7 +11,7 @@ export move_downloads
 export load_expenses, load_incomes, load_fxs
 export exchange!
 export aggregate
-export plot_categories, plot_monthly
+export plot_categories, plot_monthly, plot_weekly
 
 COLORS = colorschemes[:Paired_12][1:end]
 MONTHS = Dict(1=>"Jan", 2=>"Feb", 3=>"Mar", 4=>"Apr", 5=>"May", 6=>"Jun",

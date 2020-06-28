@@ -10,10 +10,10 @@ function plot_categories(expenses::DataFrame)
 
     # figure
     bar(categories.category, categories.amount_sum / nmonths,
-        xrotation=20,
-        ylabel="Monthly spending ($currency)",
-        fillcolor=COLORS,
-        legend=nothing)
+        xrotation=20, fillcolor=COLORS, legend=nothing, width=0.5)
+
+    # cosmetics
+    ylabel!("Monthly spending ($currency)")
     ylims!((0, ylims()[2]))
 
     # save
@@ -102,7 +102,7 @@ function plot_stacked(categories::DataFrame,
     xpos = [i for i in 1:1:nmonth]
     for (i, c) in enumerate(categories.category)
         plot!(xpos, lowers[i, :], fillrange=uppers[i, :],
-              label=c, color=COLORS[i], alpha=0.8)
+              label=c, color=COLORS[i], alpha=0.8, width=0.01)
     end
 
     # plot income
@@ -128,6 +128,56 @@ function plot_stacked(categories::DataFrame,
     xlims!(1, xlims()[2])
 
     savefig("figures/monthly_stacked.pdf")
+
+end
+
+function plot_weekly(expenses::DataFrame)
+
+    # sort the categories by total spent
+    categories = Exchequer.aggregate(expenses, "category")
+    sort!(categories, :amount_sum, rev=true)
+
+    # day of week, normalised to per day spend
+    day_exp = Exchequer.aggregate(expenses, "category", "dayofweek")
+    ndays = Dates.value(maximum(expenses.date) - minimum(expenses.date))  
+    day_exp.amount_sum /= (ndays/7)
+    
+    # prepare data for plotting
+    data = zeros(7, nrow(categories))
+    for (i, c) in enumerate(categories.category)
+        for d in 1:1:7
+            cut = (day_exp.category.==c) .& (day_exp.dayofweek.==d)
+            if nrow(day_exp[cut, :]) != 0
+                data[d, i] = day_exp[cut, "amount_sum"][1]
+            end
+        end
+    end
+
+    # plot histograms
+    bins = [i for i in 0.5:1:7.5]
+    lowers = bins[1:end-1]
+    highers = bins[2:end]
+    centres = 0.5*(lowers+highers)
+
+    ncat = nrow(categories)
+    width = 0.8 / ncat
+
+    plot()
+    for (i, c) in enumerate(categories.category)
+        shift = (-(ncat/2)+(i-0.5))*width
+        histogram!(centres.+shift, bins=bins.+shift, weights=data[:, i],
+                   bar_width=width, label=c, color=COLORS[i], width=0.5)
+    end
+
+    # total spend
+    plot!(centres, sum(data, dims=2), color="black", label="total")
+
+    # cosmetics
+    currency = expenses.currency[1]
+    ylabel!("Daily spending ($currency)")
+    days = Dict(1=>"Mon", 2=>"Tue", 3=>"Wed", 4=>"Thu", 5=>"Fri", 6=>"Sat", 7=>"Sun")
+    xticks!(centres, [days[d] for d in centres])
+    savefig("figures/weekly.pdf")
 
 end
 
