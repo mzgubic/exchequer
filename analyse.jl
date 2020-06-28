@@ -17,7 +17,7 @@ function main()
 
     # plot away
     #Exchequer.plot_categories(df_expenses)
-    return Exchequer.plot_monthly(df_expenses)
+    return Exchequer.plot_monthly(df_expenses, df_incomes)
 
 end
 
