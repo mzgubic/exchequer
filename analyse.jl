@@ -14,6 +14,7 @@ function main()
 
     # exchange the currencies
     Exchequer.exchange!(df_expenses, "EUR", df_fxs)
+    Exchequer.exchange!(df_incomes, "EUR", df_fxs)
 
     # plot away
     #Exchequer.plot_categories(df_expenses)
