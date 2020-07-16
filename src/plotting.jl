@@ -27,11 +27,11 @@ function plot_monthly(expenses::DataFrame, incomes::DataFrame)
     categories = Exchequer.aggregate(expenses, "category")
     sort!(categories, :amount_sum, rev=true)
 
-    # sort expenses by year and month and category
+    # group expenses by year and month and category
     exp_groups = Exchequer.aggregate(expenses, "year", "month", "category")
     fill_zeros!(exp_groups)
 
-    # sort incomes by year and month and category
+    # group incomes by year and month
     inc_groups = Exchequer.aggregate(incomes, "year", "month")
     fill_zeros!(inc_groups)
 
@@ -82,7 +82,7 @@ function plot_stacked(categories::DataFrame,
                       currency::String)
 
     # clear the figure
-    plot()
+    plot(legend=:topleft)
 
     # get the upper and lower limits for each category
     ncat = nrow(categories)
