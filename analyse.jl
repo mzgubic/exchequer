@@ -1,3 +1,6 @@
+import Pkg
+Pkg.activate(".")
+
 include("src/Exchequer.jl")
 
 using ArgParse
@@ -42,6 +45,7 @@ function main()
     Exchequer.plot_categories(df_expenses)
     Exchequer.plot_monthly(df_expenses, df_incomes)
     Exchequer.plot_weekly(df_expenses)
+    Exchequer.plot_yearly(df_expenses, df_incomes)
 
     return nothing
 

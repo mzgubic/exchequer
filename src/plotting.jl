@@ -21,6 +21,29 @@ function plot_categories(expenses::DataFrame)
 
 end
 
+function plot_yearly(expenses::DataFrame, incomes::DataFrame)
+
+    # sort the categories by total spent
+    categories = Exchequer.aggregate(expenses, "category")
+    sort!(categories, :amount_sum, rev=true)
+
+    # group expenses by year and month and category
+    exp = Exchequer.aggregate(expenses, "year", "category")
+
+    # and fill in zeros to categories
+    fill_zeros!(exp)
+
+    # group incomes by year and month
+    inc = Exchequer.aggregate(incomes, "year")
+
+    # compute number of months in each year (first and last != 12)
+    months_in_year = Dict(y=>length(unique(expenses[expenses.year.==y, "month"]))
+                          for y in unique(expenses.year))
+    
+
+
+end
+
 function plot_monthly(expenses::DataFrame, incomes::DataFrame)
 
     # sort the categories by total spent

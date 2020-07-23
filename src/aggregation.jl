@@ -31,7 +31,33 @@ function months(df::DataFrame)::Float64
     
 end
 
-function fill_zeros!(groups::DataFrame)::DataFrame
+function fill_zeros!(groups::DataFrame)
+
+    if "month" in names(groups)
+        return fill_zeros_ym!(groups)
+    else
+        return fill_zeros_y!(groups)
+    end
+end
+
+function fill_zeros_y!(groups::DataFrame)
+
+    # earliest and latest year
+    e_year = minimum(groups.year)
+    l_year = maximum(groups.year)
+
+    for year in e_year:1:l_year
+        for c in unique(groups.category)
+            cut = (groups.year .== year) .& (groups.category .== c)
+            if nrow(groups[cut, :]) == 0
+                push!(groups, (year=year, category=c, amount_sum=0))
+            end
+        end
+    end
+
+end
+
+function fill_zeros_ym!(groups::DataFrame)
 
     # get the earliest and latest months
     e_year = minimum(groups.year)
@@ -70,7 +96,6 @@ function fill_zeros!(groups::DataFrame)::DataFrame
 
     sort!(groups)
 
-    return groups
 end
 
 
