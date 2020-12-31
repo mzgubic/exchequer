@@ -15,7 +15,7 @@ function parse()
         "--currency"
             help = "choose which currency to report in"
             arg_type = String
-            default = "EUR"
+            default = "GBP"
             range_tester = x -> x in ["EUR", "GBP"]
     end
 

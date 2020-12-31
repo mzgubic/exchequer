@@ -39,13 +39,9 @@ function plot_yearly(expenses::DataFrame, incomes::DataFrame)
     # compute number of months in each year (first and last != 12)
     months_in_year = Dict(y=>length(unique(expenses[expenses.year.==y, "month"]))
                           for y in unique(expenses.year))
-    
-
-
 end
 
 function plot_monthly(expenses::DataFrame, incomes::DataFrame)
-
     # sort the categories by total spent
     categories = Exchequer.aggregate(expenses, "category")
     sort!(categories, :amount_sum, rev=true)
@@ -67,11 +63,9 @@ function plot_monthly(expenses::DataFrame, incomes::DataFrame)
     plot_stacked(categories, exp_groups, inc_groups, currency)
 
     return inc_groups
-
 end
 
 function plot_unstacked(categories::DataFrame, groups::DataFrame, currency::String)
-    
     # clear the figure
     plot()
 
@@ -93,19 +87,18 @@ function plot_unstacked(categories::DataFrame, groups::DataFrame, currency::Stri
     ylabel!("Monthly spending ($currency)")
     ylims!(0, ylims()[2])
     xlims!(1, xlims()[2])
+    plot!(legend=:topright)
 
     # save
     savefig("figures/monthly_unstacked.pdf")
-
 end
 
 function plot_stacked(categories::DataFrame,
                       exp_groups::DataFrame,
                       inc_groups::DataFrame,
                       currency::String)
-
     # clear the figure
-    plot(legend=:topleft)
+    plot()
 
     # get the upper and lower limits for each category
     ncat = nrow(categories)
@@ -135,7 +128,7 @@ function plot_stacked(categories::DataFrame,
     # plot net numbers
     net = [trunc(Int, n) for n in total_income - total_expense]
     ypos = [max(a, b)+50 for (a, b) in zip(total_income, total_expense)]
-    texts = [(x, y, text(n, 7, :left, n > 0 ? :green : :red,))
+    texts = [(x, y, text(n, 7, :left, n > 0 ? :green : :red; rotation=60,))
              for (x, y, n) in zip(xpos, ypos, net)]
     annotate!(texts)
 
@@ -149,9 +142,9 @@ function plot_stacked(categories::DataFrame,
     ylabel!("Monthly spending ($currency)")
     ylims!(0, ylims()[2])
     xlims!(1, xlims()[2])
+    plot!(legend=:topright)
 
     savefig("figures/monthly_stacked.pdf")
-
 end
 
 function plot_weekly(expenses::DataFrame)
